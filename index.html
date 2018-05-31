@@ -12,6 +12,16 @@
 </head>
 
 <body>
+  <div class="chat">
+    <div id="chat__messages"></div>
+    <div class="chat__inputs">
+      <input id="chat__inputs__user" type="text" placeholder="Guest">
+      <input id="chat__inputs__message" type="text" placeholder="Type here to chat">
+      <button onclick="CHAT.sendChatMessage()">
+        Send
+      </button>
+    </div>
+  </div>
   <script src="http://185.13.90.140:8081/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
