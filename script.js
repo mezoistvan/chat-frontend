@@ -1,44 +1,94 @@
 class ElementNotFoundError extends Error {};
 
-window.CHAT = {};
-
-CHAT.socket = io.connect('http://185.13.90.140:8081/');
-CHAT.socket.on('connect', () => {
-    CHAT.socket.on('message',  (message) => {
-        CHAT.appendOthersMessage(message);
-    });
-});
-
-CHAT.getElementValueById = (id) => {
-    const inputField = document.getElementById(id);
-
-    if (!inputField) {
-        throw new ElementNotFoundError(`Element not found with id: ${id}`);
-        return null;
+class SocketService {
+    constructor() {
+        this.socket = io.connect('http://185.13.90.140:8081/');
+        this.socket.on('connect', () => {
+            this.socket.on('message',  (message) => {
+                MessageRenderer.appendRemoteMessage(message);
+            });
+        });
     }
-    return inputField.value;
-};
 
-CHAT.appendMessage = (message, isOwnMessage) => {
-    console.log(message.user, message.message, isOwnMessage ? 'this is my message' : 'this is not my message');
-
-    const chatWindow = document.getElementById('chat__messages'); // plural? singular? CONSTISTENCY! // error handling!
-    const newMessage = document.createElement('div');
-    newMessage.innerHTML = `${message.user}: ${message.message}`; // something better than innerHTML? XSS vulnerability?
-    // add class based on isOwnMessage
-    chatWindow.appendChild(newMessage);
-};
-
-CHAT.appendMyMessage = (message) => CHAT.appendMessage(message, true);
-CHAT.appendOthersMessage = (message) => CHAT.appendMessage(message, false);
-
-CHAT.sendChatMessage = () => {
-    let user = CHAT.getElementValueById('chat__inputs__user') || 'Guest';
-    let message = CHAT.getElementValueById('chat__inputs__message');
-    let messageObj = {user, message};
-
-    if (message) { // disable chat button?
-        CHAT.socket.emit('message', messageObj);
-        CHAT.appendMyMessage(messageObj);    
+    sendMessage(message) {
+        this.socket.emit('message', message);
     }
-};
+}
+
+class Message {
+    static _createNewMessage() {
+        return document.createElement('div');
+    }
+
+    static _createMessageMessage(message) {
+        const messageMessage = document.createElement('span');
+        messageMessage.classList.add('chat__message__message');
+        messageMessage.innerHTML = message.message;
+        return messageMessage;
+    }
+
+    static createMyMessage(message) {
+        const newMessage = Message._createNewMessage();
+
+        newMessage.classList.add('chat__message--own')
+
+        newMessage.appendChild(Message._createMessageMessage(message));
+
+        return newMessage;
+    }
+
+    static createRemoteMessage(message) {
+        const newMessage = Message._createNewMessage();
+
+        const messageUser = document.createElement('span');
+        messageUser.classList.add('chat__message__user');
+        messageUser.innerHTML = `${message.user}: `;
+        newMessage.appendChild(messageUser);
+
+        newMessage.appendChild(Message._createMessageMessage(message));
+
+        return newMessage;
+    }
+}
+
+class MessageRenderer {
+    static _appendMessage(messageElement) {
+        const chatWindow = document.getElementById('chat__messages'); // error handling!
+
+        chatWindow.appendChild(messageElement);
+    }
+
+    static appendMyMessage(message) {
+        MessageRenderer._appendMessage(Message.createMyMessage(message));
+    }
+
+    static appendRemoteMessage(message) {
+        MessageRenderer._appendMessage(Message.createRemoteMessage(message));
+    }
+}
+
+class MessageSender {
+    static _getElementValueById (id) {
+        const inputField = document.getElementById(id);
+    
+        if (!inputField) {
+            throw new ElementNotFoundError(`Element not found with id: ${id}`);
+            return null;
+        }
+        return inputField.value;
+    }
+
+    static sendMessage() {
+        let user = MessageSender._getElementValueById('chat__inputs__user') || 'Guest';
+        let message = MessageSender._getElementValueById('chat__inputs__message');
+        let messageObj = {user, message};
+
+        if (message) { // order lul
+            MessageRenderer.appendMyMessage(messageObj);
+            CHAT.socketService.sendMessage(messageObj);
+        }
+    }
+}
+
+CHAT = {};
+CHAT.socketService = new SocketService();
