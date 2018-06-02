@@ -1,3 +1,5 @@
+// NOTE: Normally I would put each class in its own file, then bundle them together.
+
 class ElementNotFoundError extends Error {};
 
 class SocketService {
@@ -15,6 +17,9 @@ class SocketService {
     }
 }
 
+CHAT = {};
+CHAT.socketService = new SocketService();
+
 class Message {
     static _createNewMessage() {
         return document.createElement('div');
@@ -27,11 +32,17 @@ class Message {
         return messageMessage;
     }
 
+    static _createMessageUser(message) {
+        const messageUser = document.createElement('span');
+        messageUser.classList.add('chat__message__user');
+        messageUser.innerHTML = `${message.user}: `;
+        return messageUser;
+    }
+
     static createMyMessage(message) {
         const newMessage = Message._createNewMessage();
 
         newMessage.classList.add('chat__message--own')
-
         newMessage.appendChild(Message._createMessageMessage(message));
 
         return newMessage;
@@ -40,11 +51,7 @@ class Message {
     static createRemoteMessage(message) {
         const newMessage = Message._createNewMessage();
 
-        const messageUser = document.createElement('span');
-        messageUser.classList.add('chat__message__user');
-        messageUser.innerHTML = `${message.user}: `;
-        newMessage.appendChild(messageUser);
-
+        newMessage.appendChild(Message._createMessageUser(message));
         newMessage.appendChild(Message._createMessageMessage(message));
 
         return newMessage;
@@ -94,9 +101,18 @@ class MessageSender {
         if (message) { // order lul
             MessageRenderer.appendMyMessage(messageObj);
             CHAT.socketService.sendMessage(messageObj);
+            document.getElementById('chat__inputs__message').value = '';
+        }
+    }
+
+    static sendMessageOnEnter(event) {
+        if (event.keyCode == 13) {
+            document.getElementById('chat__inputs__send').click();
+            document.getElementById('chat__inputs__send').classList.add('chat__button--active');
+            setTimeout(() => {
+                document.getElementById('chat__inputs__send').classList.remove('chat__button--active');
+            }, 100);
+            MessageSender.sendMessage();
         }
     }
 }
-
-CHAT = {};
-CHAT.socketService = new SocketService();

@@ -17,9 +17,15 @@
         <div id="chat__messages--messages"></div>
     </div>
     <div id="chat__inputs">
-      <input id="chat__inputs__user" type="text" placeholder="Guest">
-      <input id="chat__inputs__message" type="text" placeholder="Type here to chat">
-      <button id="chat__inputs__send" onclick="MessageSender.sendMessage()">
+      <input id="chat__inputs__user"
+        type="text"
+        placeholder="Guest">
+      <input id="chat__inputs__message"
+        type="text"
+        placeholder="Type here to chat"
+        onkeydown="MessageSender.sendMessageOnEnter(event)">
+      <button id="chat__inputs__send"
+        onclick="MessageSender.sendMessage()">
         Send
       </button>
     </div>
