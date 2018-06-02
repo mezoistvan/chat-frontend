@@ -53,17 +53,25 @@ class Message {
 
 class MessageRenderer {
     static _appendMessage(messageElement) {
-        const chatWindow = document.getElementById('chat__messages'); // error handling!
+        const chatWindow = document.getElementById('chat__messages--messages'); // error handling!
 
         chatWindow.appendChild(messageElement);
     }
 
+    static _scrollToBottom() {
+        const chatWindow = document.getElementById('chat__messages--messages'); // error handling!
+
+        chatWindow.scrollTop = chatWindow.scrollHeight - chatWindow.clientHeight;
+    }
+
     static appendMyMessage(message) {
         MessageRenderer._appendMessage(Message.createMyMessage(message));
+        MessageRenderer._scrollToBottom();
     }
 
     static appendRemoteMessage(message) {
         MessageRenderer._appendMessage(Message.createRemoteMessage(message));
+        MessageRenderer._scrollToBottom();
     }
 }
 
