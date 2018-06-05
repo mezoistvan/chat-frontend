@@ -1,118 +1,176 @@
+'use strict';
+
 // NOTE: Normally I would put each class in its own file, then bundle them together.
+// Private functions start with an underscore.
 
-class ElementNotFoundError extends Error {};
-
-class SocketService {
-    constructor() {
-        this.socket = io.connect('http://185.13.90.140:8081/');
-        this.socket.on('connect', () => {
-            this.socket.on('message',  (message) => {
-                MessageRenderer.appendRemoteMessage(message);
-            });
-        });
-    }
-
-    sendMessage(message) {
-        this.socket.emit('message', message);
-    }
-}
-
-CHAT = {};
-CHAT.socketService = new SocketService();
-
+/**
+ * Static class that creates a chat message HTMLElement
+ */
 class Message {
     static _createNewMessage() {
         return document.createElement('div');
     }
 
-    static _createMessageMessage(message) {
-        const messageMessage = document.createElement('span');
-        messageMessage.classList.add('chat__message__message');
-        messageMessage.innerHTML = message.message;
-        return messageMessage;
+    static _createMessageBody(message) {
+        const messageBody = document.createElement('span');
+        messageBody.classList.add('typography-normal');
+        messageBody.textContent = message.message;
+        return messageBody;
     }
 
     static _createMessageUser(message) {
         const messageUser = document.createElement('span');
-        messageUser.classList.add('chat__message__user');
-        messageUser.innerHTML = `${message.user}: `;
+        messageUser.classList.add('typography-bold');
+        messageUser.textContent = `${message.user}: `;
         return messageUser;
     }
 
+    /**
+    * Returns a chat message where the user is not present and the content is aligned right
+    */
     static createMyMessage(message) {
         const newMessage = Message._createNewMessage();
 
         newMessage.classList.add('chat__message--own')
-        newMessage.appendChild(Message._createMessageMessage(message));
+        newMessage.appendChild(Message._createMessageBody(message));
 
         return newMessage;
     }
 
+    /**
+    * Returns a standard chat message with the user and message body
+    */
     static createRemoteMessage(message) {
         const newMessage = Message._createNewMessage();
 
         newMessage.appendChild(Message._createMessageUser(message));
-        newMessage.appendChild(Message._createMessageMessage(message));
+        newMessage.appendChild(Message._createMessageBody(message));
 
         return newMessage;
     }
 }
 
+/**
+* Service class that handles the socket.io connection. It connects to the server when instantiated.
+*/
+class SocketService {
+    constructor(messageRenderer) {
+        this.messageRenderer = messageRenderer;
+
+        this.socket = io.connect('http://185.13.90.140:8081/');
+        this.socket.on('connect', () => {
+            this.socket.on('message',  (message) => {
+                this.messageRenderer.appendRemoteMessage(message);
+            });
+        });
+    }
+
+    /**
+    * Send a socket message to the server
+    */
+    sendMessage(message) {
+        this.socket.emit('message', message);
+    }
+}
+
+class ElementNotFoundError extends Error {};
+
+/**
+* This class handles the element selection for the chat form. Currently only works if there is exactly one chat form in the DOM.
+* Throws ElementNotFoundError if any chat element is not found.
+*/
+class ChatForm {
+    _getFirstElementByClassName(className) {
+        let potentialElement = document.getElementsByClassName(className)[0];
+        if (!potentialElement) {
+            throw new ElementNotFoundError(`Element not found with class name: ${className}`);
+        }
+        return potentialElement;
+    }
+
+    constructor() {
+        this.userInput = this._getFirstElementByClassName('chat__inputs__user');
+        this.messageInput = this._getFirstElementByClassName('chat__inputs__message');
+        this.sendButton = this._getFirstElementByClassName('chat__inputs__send');
+        this.messagesDisplay = this._getFirstElementByClassName('chat__messages--messages');
+    }
+}
+
+/**
+* Handles rendering of the messages in the chat form.
+*/
 class MessageRenderer {
-    static _appendMessage(messageElement) {
-        const chatWindow = document.getElementById('chat__messages--messages'); // error handling!
-
-        chatWindow.appendChild(messageElement);
+    constructor(chatForm) {
+        this.chatForm = chatForm;
     }
 
-    static _scrollToBottom() {
-        const chatWindow = document.getElementById('chat__messages--messages'); // error handling!
-
-        chatWindow.scrollTop = chatWindow.scrollHeight - chatWindow.clientHeight;
+    _appendMessage(messageElement) {
+        this.chatForm.messagesDisplay.appendChild(messageElement);
     }
 
-    static appendMyMessage(message) {
-        MessageRenderer._appendMessage(Message.createMyMessage(message));
-        MessageRenderer._scrollToBottom();
+    /**
+    * After each message is added, the chat window has to be scrolled to the bottom manually.
+    */
+    _scrollToBottom() {
+        this.chatForm.messagesDisplay.scrollTop = this.chatForm.messagesDisplay.scrollHeight - this.chatForm.messagesDisplay.clientHeight;
     }
 
-    static appendRemoteMessage(message) {
-        MessageRenderer._appendMessage(Message.createRemoteMessage(message));
-        MessageRenderer._scrollToBottom();
+    appendMyMessage(message) {
+        this._appendMessage(Message.createMyMessage(message));
+        this._scrollToBottom();
+    }
+
+    appendRemoteMessage(message) {
+        this._appendMessage(Message.createRemoteMessage(message));
+        this._scrollToBottom();
     }
 }
 
+/**
+* Handles sending of the messages in the chat form.
+*/
 class MessageSender {
-    static _getElementValueById (id) {
-        const inputField = document.getElementById(id);
-    
-        if (!inputField) {
-            throw new ElementNotFoundError(`Element not found with id: ${id}`);
-            return null;
-        }
-        return inputField.value;
+    constructor(socketService, chatForm, messageRenderer) {
+        this.socketService = socketService;
+        this.chatForm = chatForm;
+        this.messageRenderer = messageRenderer;
     }
 
-    static sendMessage() {
-        let user = MessageSender._getElementValueById('chat__inputs__user') || 'Guest';
-        let message = MessageSender._getElementValueById('chat__inputs__message');
-        let messageObj = {user, message};
+    /**
+    * Sends the message via the socketService and resets the form's value if there is a message present
+    */
+    sendMessage() {
+        let message = this.chatForm.messageInput.value;
+        if (message) {
+            let user = this.chatForm.userInput.value || 'Guest';
+            let messageObj = {user, message};
 
-        if (message) { // order lul
-            MessageRenderer.appendMyMessage(messageObj);
-            CHAT.socketService.sendMessage(messageObj);
-            document.getElementById('chat__inputs__message').value = '';
+            this.messageRenderer.appendMyMessage(messageObj);
+            this.socketService.sendMessage(messageObj);
+            this.chatForm.messageInput.value = '';
         }
     }
 
-    static sendMessageOnEnter(event) {
+    /**
+    * Sends the message on pressing the enter key in the message input
+    */
+    sendMessageOnEnter(event) {
         if (event.keyCode == 13) {
-            document.getElementById('chat__inputs__send').click();
-            document.getElementById('chat__inputs__send').classList.add('chat__button--active');
+            this.chatForm.sendButton.click();
+            this.chatForm.sendButton.classList.add('chat__button--active');
             setTimeout(() => {
-                document.getElementById('chat__inputs__send').classList.remove('chat__button--active');
+                this.chatForm.sendButton.classList.remove('chat__button--active');
             }, 100);
-            MessageSender.sendMessage();
+            this.sendMessage();
         }
     }
 }
+
+/**
+* The application uses the CHAT namespace on window.
+*/
+window.CHAT = {};
+CHAT.chatForm = new ChatForm();
+CHAT.messageRenderer = new MessageRenderer(CHAT.chatForm);
+CHAT.socketService = new SocketService(CHAT.messageRenderer);
+CHAT.messageSender = new MessageSender(CHAT.socketService, CHAT.chatForm, CHAT.messageRenderer);

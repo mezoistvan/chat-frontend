@@ -13,20 +13,20 @@
 </head>
 
 <body>
-  <div id="chat">
-    <div id="chat__messages--wrapper">
-        <div id="chat__messages--messages"></div>
+  <div class="chat">
+    <div class="chat__messages--wrapper">
+        <div class="chat__messages--messages"></div>
     </div>
-    <div id="chat__inputs">
-      <input id="chat__inputs__user"
+    <div class="chat__inputs">
+      <input class="chat__inputs__user shadow-small-primary"
         type="text"
         placeholder="Guest">
-      <input id="chat__inputs__message"
+      <input class="chat__inputs__message shadow-small-primary"
         type="text"
         placeholder="Type here to chat"
-        onkeydown="MessageSender.sendMessageOnEnter(event)">
-      <button id="chat__inputs__send"
-        onclick="MessageSender.sendMessage()">
+        onkeydown="CHAT.messageSender.sendMessageOnEnter(event)">
+      <button class="chat__inputs__send shadow-small-accent typography-big-bold"
+        onclick="CHAT.messageSender.sendMessage()">
         Send
       </button>
     </div>
