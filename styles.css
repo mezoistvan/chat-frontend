@@ -78,6 +78,8 @@ body {
 
 .chat__inputs > * {
     height: 32px;
+    border-radius: 0px;
+    -webkit-appearance: none;
 }
 
 .chat__inputs > *:focus {
