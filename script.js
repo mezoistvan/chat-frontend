@@ -92,7 +92,7 @@ class ChatForm {
         this.userInput = this._getFirstElementByClassName('chat__inputs__user');
         this.messageInput = this._getFirstElementByClassName('chat__inputs__message');
         this.sendButton = this._getFirstElementByClassName('chat__inputs__send');
-        this.messagesDisplay = this._getFirstElementByClassName('chat__messages--messages');
+        this.messagesDisplay = this._getFirstElementByClassName('chat__messages');
     }
 }
 
