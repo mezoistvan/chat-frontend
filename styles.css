@@ -17,8 +17,8 @@ body {
     --box-shadow-small: 2px;
     --box-shadow-big: 10px;
 
-    --font-size-normal: 14px;
-    --font-size-big: 16px;
+    --font-size-normal: 16px;
+    --font-size-big: 18px;
 }
 
 .typography-bold {
@@ -91,6 +91,7 @@ body {
     border: solid var(--color-primary);
     padding-left: 10px;
     box-sizing: border-box;
+    font-size: var(--font-size-normal);
 }
 
 .chat__inputs__message {
@@ -99,6 +100,7 @@ body {
     border: solid var(--color-primary);
     padding-left: 10px;
     box-sizing: border-box;
+    font-size: var(--font-size-normal);
 }
 
 .chat__inputs__send {
@@ -109,6 +111,7 @@ body {
 
     background-color: var(--color-secondary);
     border: solid var(--color-accent);
+    font-size: var(--font-size-big);
 }
 
 @media only screen and (max-width: 720px) {
