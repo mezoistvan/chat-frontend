@@ -71,9 +71,13 @@ body {
 }
 
 .chat__inputs {
-    height: 80px;
-
     display: flex;
+    flex: 0 0 80px;
+    align-items: center;
+}
+
+.chat__inputs > * {
+    height: 32px;
 }
 
 .chat__inputs > *:focus {
@@ -126,7 +130,7 @@ body {
     }
 
     .chat__inputs > * {
-        margin: 20px 10px;
+        margin: 0 10px;
     }
 
     .chat__inputs__user {
@@ -159,10 +163,10 @@ body {
 
     .chat__messages--messages > * {
         margin: 20px 0 20px 20px;
-    }    
+    }
 
     .chat__inputs > * {
-        margin: 20px;
+        margin: 0 20px;
     }
 
     .chat__inputs__user {
